@@ -30,6 +30,7 @@ namespace ShopAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            //To use SQL server
             services.AddDbContext<ItemContext>(opt => opt.UseSqlServer(Configuration.GetConnectionString("ItemStorageConnection")));
 
             //Basicly saying that when IItem is called, call SqlItem

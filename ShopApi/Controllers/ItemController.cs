@@ -46,7 +46,7 @@ namespace ShopApi.Controllers
             }
             return NotFound();
 
-            
+
         }
 
         //POST api/items
@@ -60,7 +60,7 @@ namespace ShopApi.Controllers
             _context.SaveChanges();
 
             var itemReadDTO = _mapper.Map<ItemReadDTO>(itemModel);
-            
+
             //CreatedAtRoute - Name of route | Route data | Content value (body)
             return CreatedAtRoute(nameof(GetItemById), new { Id = itemReadDTO }, itemReadDTO);
         }
@@ -75,9 +75,25 @@ namespace ShopApi.Controllers
                 return NotFound();
             }
 
-            _mapper.Map(itemUpdateDTO, itemModel);
-            _context.UpdateItem(itemModel);
-            _context.SaveChanges();
+
+            //Works?
+            try
+            {
+                _mapper.Map(itemUpdateDTO, itemModel);
+                _context.UpdateItem(itemModel);
+                _context.SaveChanges();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ItemExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             return NoContent();
         }
@@ -94,6 +110,7 @@ namespace ShopApi.Controllers
 
             var itemToPatch = _mapper.Map<ItemUpdateDTO>(itemModel);
             patchDoc.ApplyTo(itemToPatch, ModelState);
+
             if (!TryValidateModel(itemToPatch))
             {
                 return ValidationProblem(ModelState);
@@ -123,100 +140,10 @@ namespace ShopApi.Controllers
             return NoContent();
         }
 
+        private bool ItemExists(int id)
+        {
+            return _context.GetAllItems().Any(x => x.Id == id);
+
+        }
     }
 }
-
-//private readonly ShopContext _context;
-
-//        public ItemsController(ShopContext context)
-//        {
-//            _context = context;
-//        }
-//// GET: api/Items
-//        [HttpGet]
-//        public async Task<ActionResult<IEnumerable<Item>>> GetItems()
-//        {
-//            var items = await _context.Items.ToListAsync();
-//            return Ok(items);
-//        }
-
-//        // GET: api/Items/5
-//        [HttpGet("{id}")]
-//        public async Task<ActionResult<Item>> GetItem(int id)
-//        {
-//            var item = await _context.Items.FindAsync(id);
-
-//            if (item == null)
-//            {
-//                return NotFound();
-//            }
-
-//            return Ok(item); //return item
-
-//        }
-
-//        // PUT: api/Items/5
-//        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-//        [HttpPut("{id}")]
-//        public async Task<IActionResult> PutItem(int id, Item item) //Update
-//        {
-//            if (id != item.Id)
-//            {
-//                return BadRequest();
-//            }
-
-//            _context.Entry(item).State = EntityState.Modified;
-
-//            try
-//            {
-//                await _context.SaveChangesAsync();
-//            }
-//            catch (DbUpdateConcurrencyException)
-//            {
-//                if (!ItemExists(id))
-//                {
-//                    return NotFound();
-//                }
-//                else
-//                {
-//                    throw;
-//                }
-//            }
-
-//            return NoContent();
-
-
-//        }
-
-//        // POST: api/Items
-//        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-//        [HttpPost]
-//        public async Task<ActionResult<Item>> PostItem(Item item) //Create 
-//        {
-//            _context.Items.Add(item);
-//            await _context.SaveChangesAsync();
-//            var newItem = CreatedAtAction(nameof(GetItem), new { id = item.Id }, item); //nameof - To avoid hard-coding the action name
-//            return Ok(newItem);
-
-//        }
-
-//        // DELETE: api/Items/5
-//        [HttpDelete("{id}")]
-//        public async Task<IActionResult> DeleteItem(int id)
-//        {
-//            var item = await _context.Items.FindAsync(id);
-            
-//            if (item == null){
-//                return NotFound();
-//            }
-
-//            _context.Items.Remove(item);
-//            await _context.SaveChangesAsync();
-
-//            return NoContent();
-//        }
-
-//        private bool ItemExists(int id)
-//        {
-//            return _context.Items.Any(e => e.Id == id);
-//        }
